@@ -38,16 +38,21 @@ class MyPixaiTagger:
             img_np = 255. * img_tensor.cpu().numpy()
             img_pil = Image.fromarray(np.uint8(img_np))
 
+            # 2. 呼叫 PixAI 模型 (移除不被支援的參數)
             general, character, _, _ = get_pixai_tags(
                 img_pil,
                 model_name='v0.9',
                 fmt=('general', 'character', 'ips', 'ips_mapping'),
-                threshold=threshold,
-                character_threshold=char_threshold
+                # 這裡不再傳入 threshold，讓它回傳所有機率
             )
 
-            char_tags = [t for t in character.keys() if t.lower() not in exclude_list]
-            gen_tags = [t for t in general.keys() if t.lower() not in exclude_list]
+            # 3. 在此處手動過濾標籤 (根據你節點上的 threshold 設定)
+            # 只有分數大於門檻，且不在排除清單中的標籤才會留下
+            char_tags = [tag for tag, score in character.items() 
+                         if score >= char_threshold and tag.lower() not in exclude_list]
+            
+            gen_tags = [tag for tag, score in general.items() 
+                        if score >= threshold and tag.lower() not in exclude_list]
             
             final_tags = char_tags + gen_tags
             
