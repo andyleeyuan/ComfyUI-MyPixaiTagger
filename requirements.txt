@@ -3,5 +3,5 @@ huggingface_hub
 timm
 pillow
 pandas
-numpy
+numpy==1.26.4
 onnxruntime-gpu
