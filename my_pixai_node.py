@@ -66,5 +66,11 @@ class MyPixaiTagger
 
         return (results,)
 
-NODE_CLASS_MAPPINGS = {MyPixaiTagger MyPixaiTagger}
-NODE_DISPLAY_NAME_MAPPINGS = {MyPixaiTagger 🌸 PixAI Tagger v0.9 (Batch)}
+NODE_CLASS_MAPPINGS = {
+    "MyPixaiTagger": MyPixaiTagger
+}
+
+# 這裡的鍵必須是字串 "MyPixaiTagger"，值也要是字串
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "MyPixaiTagger": "PixAI Tagger v0.9 (Batch)"
+}
