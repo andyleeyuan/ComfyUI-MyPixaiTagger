@@ -25,45 +25,45 @@ class MyPixaiTagger:
     CATEGORY = "ImageTagging" # 必須是字串
 
     def tag_batch(self, image, threshold, char_threshold, exclude_tags, replace_underscore, add_trailing_comma):
-        # 函式定義行末尾必須有冒號 ^
         results = []
         pbar = comfy.utils.ProgressBar(len(image)) 
         
-        exclude_list = [t.strip().lower() for t in exclude_tags.split(',') if t.strip()]
+        # 預處理排除清單：轉小寫並將空格統一轉為底線，確保比對基準一致
+        exclude_list = [t.strip().lower().replace(" ", "_") for t in exclude_tags.split(',') if t.strip()]
 
         for i in range(len(image)):
-            # 迴圈行末尾必須有冒號 ^
             img_tensor = image[i]
-            # 這裡修正了乘號，原本少了 *
             img_np = 255. * img_tensor.cpu().numpy()
             img_pil = Image.fromarray(np.uint8(img_np))
 
-            # 2. 呼叫 PixAI 模型 (移除不被支援的參數)
+            # 呼叫 PixAI 模型
             general, character, _, _ = get_pixai_tags(
                 img_pil,
                 model_name='v0.9',
                 fmt=('general', 'character', 'ips', 'ips_mapping'),
-                # 這裡不再傳入 threshold，讓它回傳所有機率
             )
 
-            # 3. 在此處手動過濾標籤 (根據你節點上的 threshold 設定)
-            # 只有分數大於門檻，且不在排除清單中的標籤才會留下
-            char_tags = [tag for tag, score in character.items() 
-                         if score >= char_threshold and tag.lower() not in exclude_list]
+            # 過濾標籤：在比對時同樣將 tag 轉為底線格式進行檢查
+            char_tags = [
+                tag for tag, score in character.items() 
+                if score >= char_threshold and tag.lower().replace(" ", "_") not in exclude_list
+            ]
             
-            gen_tags = [tag for tag, score in general.items() 
-                        if score >= threshold and tag.lower() not in exclude_list]
+            gen_tags = [
+                tag for tag, score in general.items() 
+                if score >= threshold and tag.lower().replace(" ", "_") not in exclude_list
+            ]
             
             final_tags = char_tags + gen_tags
             
-            # 修正 join 語法，必須是 ", ".join(...)
+            # 組合成字串
             tag_string = ", ".join(final_tags)
             
-            if replace_underscore: # 冒號
-                # 修正 replace 語法，底線與空格必須是字串
+            # 格式化處理
+            if replace_underscore:
                 tag_string = tag_string.replace("_", " ")
             
-            if add_trailing_comma and tag_string: # 冒號
+            if add_trailing_comma and tag_string:
                 tag_string += ","
 
             results.append(tag_string)
