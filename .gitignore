@@ -1,4 +1,14 @@
 __pycache__/
+*.py[cod]
 *.onnx
+*.bin
+*.pth
+*.pt
+*.safetensors
 *.csv
+.DS_Store
 .ipynb_checkpoints/
+.venv/
+venv/
+env/
+.env

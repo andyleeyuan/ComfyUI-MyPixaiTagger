@@ -1,79 +1,83 @@
 # ComfyUI PixAI Tagger v1.0
 
-使用官方 [PixAI Tagger v1.0](https://huggingface.co/pixai-labs/pixai-tagger-v1.0) 的 ComfyUI 自訂節點。節點會在第一次執行時，從 Hugging Face 下載官方模型並儲存至本機快取；本儲存庫**不包含或重新散布模型權重**。
+[繁體中文](README_zh-TW.md)
 
-v1.0 是不同於舊版 v0.9 的 Transformers 模型，能輸出 30,877 個標籤，並分成 general、character、style、copyright、meta、rating 六個類別。
+[Changelog](CHANGELOG.md) · [Third-party notice](NOTICE.md) · [MIT License](LICENSE)
 
-## 安裝
+A ComfyUI custom node for the official [PixAI Tagger v1.0](https://huggingface.co/pixai-labs/pixai-tagger-v1.0). On first use, the node downloads the official model from Hugging Face and stores it in the local cache. This repository **does not include or redistribute model weights**.
 
-將此資料夾放進 `ComfyUI/custom_nodes`，然後使用 ComfyUI 所使用的 Python 安裝依賴：
+Unlike the older v0.9 release, v1.0 is a Transformers model that recognizes 30,877 tags in six categories: general, character, style, copyright, meta, and rating.
+
+## Installation
+
+Place this directory in `ComfyUI/custom_nodes`, then install the requirements with the Python environment used by ComfyUI:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-重新啟動 ComfyUI 後，加入 **🌸 PixAI Tagger v1.0 (Batch)** 節點。首次執行需要網路連線以下載約 1.9 GB 的官方模型；建議使用 CUDA GPU。模型下載與後續快取均由 Hugging Face 管理。
+Restart ComfyUI and add the **🌸 PixAI Tagger v1.0 (Batch)** node. The first run needs an internet connection to download about 1.9 GB of official model files. A CUDA GPU is recommended. Hugging Face manages the download and subsequent local cache.
 
-> 此節點以 `trust_remote_code=True` 載入 PixAI 官方模型庫提供的自訂 Transformers 程式碼。請只在你信任該官方來源時使用。
+> This node uses `trust_remote_code=True` to load custom Transformers code supplied by PixAI's official model repository. Only use it if you trust that official source.
 
-## 設定
+## Settings
 
-每個 threshold 都是最低信心值（0 至 1）。提高數值會減少標籤數量並提高保守程度；降低數值會增加召回率，也可能增加誤判。以下預設值採用 PixAI v1.0 模型卡建議的分類閾值。
+Each threshold is a minimum confidence score from 0 to 1. Raising it returns fewer, more conservative tags; lowering it improves recall but can add false positives. The defaults below follow the category thresholds recommended by the PixAI v1.0 model card.
 
-| 設定 | 預設值 | 說明 |
+| Setting | Default | Description |
 | --- | ---: | --- |
-| `threshold` | `0.17` | General 標籤的最低信心值；例如服裝、姿勢、物件、構圖。舊版工作流的同名參數仍可使用。 |
-| `enable_characters` | 開啟 | 是否輸出已辨識的角色名稱。 |
-| `char_threshold` | `0.27` | Character 標籤的最低信心值。角色誤判時可提高至 `0.40–0.60`。 |
-| `enable_styles` | 開啟 | 是否輸出畫風與風格標籤。 |
-| `style_threshold` | `0.15` | Style 標籤的最低信心值。 |
-| `enable_copyrights` | 開啟 | 是否輸出作品、系列與 IP 標籤。 |
-| `copyright_threshold` | `0.24` | Copyright 標籤的最低信心值。 |
-| `enable_meta` | 關閉 | 是否輸出 `highres`、`official_art`、`ai-generated` 等中繼資料標籤。通常不適合直接作為 prompt。 |
-| `meta_threshold` | `0.17` | Meta 標籤的最低信心值。 |
-| `enable_rating` | 關閉 | 是否輸出 `rating:g`、`rating:s`、`rating:q`、`rating:e`。 |
-| `rating_threshold` | `0.41` | Rating 標籤的最低信心值。 |
-| `exclude_tags` | — | 要排除的標籤，可用逗號或換行分隔，例如 `lowres, text, watermark`。 |
-| `replace_underscore` | 開啟 | 將 `blue_hair` 輸出為 `blue hair`；若要保留 Danbooru 格式請關閉。 |
-| `add_trailing_comma` | 關閉 | 為合併輸出末尾加上逗號，方便後接手寫 prompt。 |
-| `batch_size` | `1` | 單次推論圖片數。從 `1` 開始；顯示卡 VRAM 足夠時再逐步提高。 |
+| `threshold` | `0.17` | Minimum confidence for general tags, such as clothing, poses, objects, and composition. The legacy parameter name is retained for existing workflows. |
+| `enable_characters` | On | Enables recognized character names. |
+| `char_threshold` | `0.27` | Minimum confidence for character tags. Raise to `0.40–0.60` if character false positives are common. |
+| `enable_styles` | On | Enables art-style and style tags. |
+| `style_threshold` | `0.15` | Minimum confidence for style tags. |
+| `enable_copyrights` | On | Enables work, series, and IP tags. |
+| `copyright_threshold` | `0.24` | Minimum confidence for copyright tags. |
+| `enable_meta` | Off | Enables metadata tags such as `highres`, `official_art`, and `ai-generated`. These are usually not useful in a generation prompt. |
+| `meta_threshold` | `0.17` | Minimum confidence for meta tags. |
+| `enable_rating` | Off | Enables `rating:g`, `rating:s`, `rating:q`, and `rating:e`. |
+| `rating_threshold` | `0.41` | Minimum confidence for rating tags. |
+| `exclude_tags` | — | Tags to exclude, separated with commas or new lines; for example, `lowres, text, watermark`. |
+| `replace_underscore` | On | Converts `blue_hair` to `blue hair`. Disable it to preserve the original Danbooru form. |
+| `add_trailing_comma` | Off | Appends a comma to the combined `tags` output, making it easier to continue writing a prompt. |
+| `batch_size` | `1` | Number of images inferred at once. Start at `1`, then raise it gradually if GPU VRAM allows. |
 
-## 輸出
+## Outputs
 
-節點對每張輸入圖片輸出下列七個字串：
+For each input image, the node returns seven strings:
 
-| 輸出 | 內容 |
+| Output | Contents |
 | --- | --- |
-| `tags` | 合併的 prompt 文字，順序為 character → copyright → style → general → meta → rating。 |
-| `general` | 服裝、姿勢、物件、構圖等可見內容。 |
-| `character` | 角色名稱。 |
-| `style` | 畫風與風格。 |
-| `copyright` | 作品、系列與 IP。 |
-| `meta` | 圖片媒材、解析度、來源等資訊。 |
-| `rating` | Danbooru 分級標籤。 |
+| `tags` | Combined prompt text in this order: character → copyright → style → general → meta → rating. |
+| `general` | Visible content such as clothing, poses, objects, and composition. |
+| `character` | Recognized character names. |
+| `style` | Art-style and style tags. |
+| `copyright` | Works, series, and IP. |
+| `meta` | Medium, resolution, provenance, and similar metadata. |
+| `rating` | Danbooru rating tags. |
 
-批次輸入時，每個輸出都會是一組與輸入圖片順序對應的字串清單。
+For batch input, every output is a list of strings matching the input image order.
 
-## 建議使用方式
+## Suggested use
 
-- 先直接使用預設值。
-- General 標籤太多時，將 `threshold` 提高到 `0.25–0.35`。
-- 角色辨識誤判較多時，提高 `char_threshold`，而不是關閉 general 標籤。
-- 要用於圖像生成 prompt 時，通常保持 `meta` 和 `rating` 關閉。
-- 想自行控制提示詞時，分別使用 `character`、`copyright`、`style`、`general` 輸出會比直接使用合併 `tags` 更彈性。
+- Start with the defaults.
+- If there are too many general tags, raise `threshold` to `0.25–0.35`.
+- If character recognition has too many false positives, raise `char_threshold` instead of disabling general tags.
+- For text-to-image prompts, keeping `meta` and `rating` disabled is usually best.
+- For more control, use the separate `character`, `copyright`, `style`, and `general` outputs instead of the combined `tags` output.
 
-## 授權與第三方內容
+## License and third-party content
 
-本儲存庫的程式碼以根目錄的 [MIT License](LICENSE) 發布；此授權**只適用於本專案自行撰寫的程式碼與文件**，不授予 PixAI 模型、模型權重、模型庫內的自訂程式碼，或 Danbooru 標籤內容的任何權利。
+The code in this repository is released under the root [MIT License](LICENSE). That license **only applies to code and documentation written for this repository**. It grants no rights to PixAI's model, model weights, custom code in the model repository, or Danbooru tag content.
 
-- 模型來源為 PixAI Labs 的官方 [PixAI Tagger v1.0 模型庫](https://huggingface.co/pixai-labs/pixai-tagger-v1.0)。本專案不將其權重或遠端程式碼提交進版本庫，也不提供鏡像下載。
-- 截至 2026-09-17，該 v1.0 模型卡未列出明確授權條款，模型庫檔案清單亦未包含 `LICENSE`。因此，請勿把本專案的 MIT 授權理解為 v1.0 權重可自由重製、修改或重新散布的許可。
-- PixAI 對舊版 v0.9 的公開公告曾提到 MIT 授權，但同時指出 Danbooru 標籤內容有其自身授權；該公告不等於 v1.0 的授權聲明。請依 v1.0 模型卡與 PixAI 的最新條款為準。
-- 若要發佈含有模型權重、複製 `tagger_pipeline.py`、建立模型鏡像，或提供商業託管服務，請先取得 PixAI Labs 的書面確認。
+- The model source is PixAI Labs' official [PixAI Tagger v1.0 repository](https://huggingface.co/pixai-labs/pixai-tagger-v1.0). This project does not commit, mirror, or distribute its weights or remote code.
+- As of 2026-09-17, the v1.0 model card does not state an explicit license and the repository file list does not include a `LICENSE` file. Do not interpret this project's MIT License as permission to reproduce, modify, or redistribute v1.0 weights.
+- PixAI's public announcement for v0.9 mentioned the MIT License but also noted that Danbooru tag content has its own licensing terms. That announcement is not a license grant for v1.0; follow the current v1.0 model card and PixAI terms.
+- Obtain written confirmation from PixAI Labs before distributing model weights, copying `tagger_pipeline.py`, mirroring the model, or providing a commercial hosted service.
 
-本說明不是法律意見。若你的公開或商業用途對授權風險敏感，請向 PixAI Labs 或合格法律專業人士確認。
+This information is not legal advice. If your public release or commercial use is license-sensitive, confirm the terms with PixAI Labs or qualified legal counsel.
 
-## 致謝
+## Credits
 
-- [PixAI Labs](https://huggingface.co/pixai-labs) — PixAI Tagger v1.0。
-- [Danbooru](https://danbooru.donmai.us/) — 標籤生態系統；請遵守其適用條款。
+- [PixAI Labs](https://huggingface.co/pixai-labs) — PixAI Tagger v1.0.
+- [Danbooru](https://danbooru.donmai.us/) — the tag ecosystem; comply with applicable terms.
